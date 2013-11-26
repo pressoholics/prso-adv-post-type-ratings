@@ -1,7 +1,8 @@
 <?php
 class ZgItemRatings {
 	
-	protected $class_config = array();
+	protected $class_config 	= array();
+	protected $current_screen	= NULL;
 	
 	function __construct( $config = array() ) {
 		
@@ -33,8 +34,8 @@ class ZgItemRatings {
 			//Confirm we are on an active admin view
 			if( $this->is_active_view() ) {
 		
-				//Set plugin actions
-				$this->set_actions();
+				//Set plugin admin actions
+				$this->set_admin_actions();
 				
 				//Enqueue admin scripts
 				$this->enqueue_admin_scripts();
@@ -83,6 +84,8 @@ class ZgItemRatings {
 				
 			}
 			
+			//Cache current screen in class protected var
+			$this->current_screen = $current_screen;
 		}
 		
 		//Finaly lets check if current view is an active view for plugin
@@ -124,7 +127,11 @@ class ZgItemRatings {
 	/**
 	 * Helper to set all actions for plugin
 	 */
-	private function set_actions() {
+	private function set_admin_actions() {
+		
+		//Loop options and init custom columns for each active view
+		$this->init_custom_admin_columns();
+		
 		
 	}
 	
@@ -132,6 +139,104 @@ class ZgItemRatings {
 	 * Helper to enqueue all scripts/styles for admin views
 	 */
 	private function enqueue_admin_scripts() {
+		
+	}
+	
+	/**
+	* init_custom_admin_columns
+	* 
+	* Loops all plugin config options and foreach one loops the
+	* 'active_post_types' options calling the correct posts columns action
+	* and filter based on the post type provided
+	* 
+	* @var		array	$options
+	* @access 	private
+	* @author	Ben Moody
+	*/
+	private function init_custom_admin_columns() {
+		
+		//Init vars
+		$options 		= $this->class_config;
+		
+		//Loop plugin config options and init custom columns for each
+		foreach( $options as $option ) {
+			
+			//Setup actions and filters for requested post type views
+			foreach( $option['active_post_types'] as $view ) {
+				switch( $view ) {
+					case 'attachment':
+						add_filter('manage_media_columns', array($this, 'add_custom_column'), 10);  
+						add_action('manage_media_custom_column', array($this, 'add_custom_column_content'), 10, 2);
+						break;
+					case 'post';
+						add_filter('manage_post_posts_columns', array($this, 'add_custom_column'), 10);  
+						add_action('manage_post_posts_custom_column', array($this, 'add_custom_column_content'), 10, 2);
+						break;
+					default:
+						add_filter('manage_'. $view .'_posts_columns', array($this, 'add_custom_column'), 10);  
+						add_action('manage_'. $view .'_posts_custom_column', array($this, 'add_custom_column_content'), 10, 2);
+						break;
+				}
+			}
+			
+		}
+		
+	}
+	
+	/**
+	* add_custom_column
+	* 
+	* Called By Filters: 'manage_media_columns', 'manage_post_posts_columns', 'manage_'. [post_type] .'_posts_columns'
+	* 
+	* @param	array	$defaults
+	* @return	array	$defaults
+	* @access 	public
+	* @author	Ben Moody
+	*/
+	public function add_custom_column( $defaults ) {
+		
+		$defaults['first_column']  = 'First Column';  
+  
+	    /* ADD ANOTHER COLUMN (OPTIONAL) */  
+	    // $defaults['second_column'] = 'Second Column';  
+	  
+	    /* REMOVE DEFAULT CATEGORY COLUMN (OPTIONAL) */  
+	    // unset($defaults['categories']);  
+	  
+	    /* TO GET DEFAULTS COLUMN NAMES: */  
+	    // print_r($defaults); 
+		
+	    return $defaults; 
+		
+	}
+	
+	/**
+	* add_custom_column
+	* 
+	* Called By Actions: 'manage_media_custom_column', 'manage_post_posts_custom_column', ''manage_'. [post_type] .'_posts_custom_column''
+	* 
+	* @param	string	$column_name
+	* @param	int		$post_ID
+	* @access 	public
+	* @author	Ben Moody
+	*/
+	public function add_custom_column_content( $column_name, $post_ID ) {
+		
+		if ($column_name == 'first_column') {  
+	        // DO STUFF FOR first_column COLUMN  
+	        echo 'The post ID is: ' . $post_ID;  
+	    }  
+	  
+	    /* IF YOU NEED ANOTHER COLUMN - UNCOMMENT ALSO 
+	    $defaults['second_column'] = 'Second Column'; 
+	    in ST4_columns_head() 
+	    */  
+	  
+	    /* 
+	    if ($column_name == 'second_column') { 
+	        // DO STUFF FOR second_column COLUMN 
+	    } 
+	    */ 
 		
 	}
 	
