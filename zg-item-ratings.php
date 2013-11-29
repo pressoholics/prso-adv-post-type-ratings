@@ -14,6 +14,7 @@
 //Define plugin constants
 define( 'ZGITEMRATINGS__MINIMUM_WP_VERSION', '3.0' );
 define( 'ZGITEMRATINGS__VERSION', '1.0' );
+define( 'ZGITEMRATINGS__DOMAIN', 'zg-item-ratings-plugin' );
 define( 'ZGITEMRATINGS__PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ZGITEMRATINGS__PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
@@ -29,7 +30,7 @@ $config_options = array(
 	array(
 		'meta_key'			=>	'META_KEY_POST_RATING',
 		'name'				=>	'Item Ratings',
-		'sprite_filename'	=>	'',
+		'disable_on_update'	=>	FALSE,
 		'active_post_types'	=>	array(
 			'post',
 			'attachment'

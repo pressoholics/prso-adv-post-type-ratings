@@ -5,6 +5,32 @@ class ZgItemRatings {
 	protected $current_screen					= NULL;
 	private	  $plugin_ajax_nonce				= 'zg-item-ratings-ajax-nonce';
 	
+	//Helper to set default config options for plugin
+	protected function set_config_option_defaults( $args, $is_all_options = FALSE ) {
+		
+		//Init vars
+		$class_config_defaults = array(
+			'name'				=>	NULL,
+			'max_rating_size'	=> 	5,
+			'min_rating_size'	=> 	0,
+			'rating_step_size'	=> 	1,
+			'css_class'			=>	NULL,
+			'disable_on_update'	=> 	TRUE,
+		);
+		$output = array();
+		
+		if( $is_all_options === TRUE ) {
+			foreach( $args as $key => $options ) {
+				$output[$key] = wp_parse_args( $options, $class_config_defaults );
+			}
+		} else {
+			$output = wp_parse_args( $args, $class_config_defaults );
+		}
+		
+		return $output;
+		
+	}
+	
 	function __construct( $config = array() ) {
 		
 		//Cache plugin congif options
@@ -249,6 +275,16 @@ class ZgItemRatings {
 		//Localize vars for rate update ajax action
 		$js_vars['rateUpdateAction'] = 'item-rate-update';
 		
+		//Localize plugin config options
+		$js_vars['pluginConfigOptions'] = $this->set_config_option_defaults( $this->class_config, TRUE );
+		
+		//Translation text for ajax rating update error
+		$js_vars['ajaxRateUpdateErrorText'] = _x( 
+			'There was a problem updating the rating. Please try again.', 
+			'Alert message for users when ajax rating update fails', 
+			ZGITEMRATINGS__DOMAIN 
+		);
+		
 		wp_localize_script( 'zg-item-ratings', $object, $js_vars );
 	}
 	
@@ -345,16 +381,25 @@ class ZgItemRatings {
 		$meta_key		= NULL;
 		$column_slug	= NULL;
 		$rating			= NULL;
+		$css_class   	= NULL;
 		$output 		= NULL;
 		
 		//Set column params
 		foreach( $this->class_config as $option ) {
+			
+			//Set option defaults
+			$option = $this->set_config_option_defaults( $option );
+			
 			if( $option['meta_key'] === $config_option_key ) {
 				
-				$meta_key = $option['meta_key'];
+				$meta_key 			= $option['meta_key'];
 				
-				$column_slug = strtolower($option['meta_key']);
-
+				$column_slug 		= strtolower($option['meta_key']);
+				
+				$css_class 			= $option['css_class'];
+				
+				$disable_on_update 	= $option['disable_on_update'];
+				
 				break;
 			}
 		}
@@ -366,7 +411,7 @@ class ZgItemRatings {
 	        
 	        ob_start();
 	        ?>
-	        <div data-itemid="<?php esc_attr_e($post_ID); ?>" data-ratinggroupid="<?php esc_attr_e($column_slug); ?>" data-rateit-value="<?php esc_attr_e($rating); ?>" class="zg-item-ratings-rateit"></div>
+	        <div data-itemid="<?php esc_attr_e($post_ID); ?>" data-ratinggroupid="<?php esc_attr_e($column_slug); ?>" data-rateit-value="<?php esc_attr_e($rating); ?>" data-disablerating="<?php esc_attr_e($disable_on_update); ?>" class="zg-item-ratings-rateit <?php esc_attr_e($column_slug); ?> <?php esc_attr($css_class); ?>"></div>
 	        <?php
 	        $output = ob_get_contents();
 	        ob_end_clean();

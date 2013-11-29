@@ -7,9 +7,29 @@ jQuery(document).ready(function( $ ){
 	var ajaxRequestUrl 		= ZgItemRatingsVars.ajaxUrl;
 	var nonceValue			= ZgItemRatingsVars.ajaxNonce;
 	var rateUpdateAction	= ZgItemRatingsVars.rateUpdateAction;
+	var pluginConfigOptions	= ZgItemRatingsVars.pluginConfigOptions;
+	var ajaxUpdateErrorText	= ZgItemRatingsVars.ajaxRateUpdateErrorText;
 	
-	$('.zg-item-ratings-rateit').rateit({ max: 5 });
+	//Init rateit plugin for each rating group setup in plugin config options
+	$.each( pluginConfigOptions, function( key, options ){
+		
+		var ratingGroupUniqueID = '';
+			
+		//Cache meta key as group id
+		ratingGroupUniqueID = options.meta_key.toLowerCase();
+		
+		//Init plugin for this rating group
+		$('.zg-item-ratings-rateit.' + ratingGroupUniqueID).rateit(
+			{ 
+				max: 	options.max_rating_size, 
+				min: 	options.min_rating_size,
+				step: 	options.rating_step_size
+			}
+		);
+		
+	});
 	
+	//Bind our ajax request to the rated/reset event for all rating groups
 	$('.zg-item-ratings-rateit').bind('rated reset', function (e) {
 
 		var ri = $(this);
@@ -18,9 +38,12 @@ jQuery(document).ready(function( $ ){
 		var value 			= ri.rateit('value');
 		var itemID 			= ri.data('itemid'); 
 		var ratingGroupID	= ri.data('ratinggroupid');
+		var disableRating	= ri.data('disablerating');
 		
 		//maybe we want to disable voting?
-		ri.rateit('readonly', true);
+		if( disableRating ) {
+			ri.rateit('readonly', true);
+		}
 		
 		//Make ajax request to update item rating
 		$.ajax({
@@ -37,7 +60,7 @@ jQuery(document).ready(function( $ ){
 			
 			},
 			error: function (jxhr, msg, err) {
-			
+				alert( ajaxUpdateErrorText );
 			}
 		});
 		
