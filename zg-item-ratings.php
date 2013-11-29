@@ -15,6 +15,7 @@
 define( 'ZGITEMRATINGS__MINIMUM_WP_VERSION', '3.0' );
 define( 'ZGITEMRATINGS__VERSION', '1.0' );
 define( 'ZGITEMRATINGS__PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'ZGITEMRATINGS__PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 //Include plugin classes
 require_once( ZGITEMRATINGS__PLUGIN_DIR . 'class.zg-item-ratings.php'               );
@@ -27,7 +28,7 @@ register_deactivation_hook( __FILE__, array( 'ZgItemRatings', 'plugin_deactivati
 $config_options = array(
 	array(
 		'meta_key'			=>	'META_KEY_POST_RATING',
-		'name'				=>	'',
+		'name'				=>	'Item Ratings',
 		'sprite_filename'	=>	'',
 		'active_post_types'	=>	array(
 			'post',
