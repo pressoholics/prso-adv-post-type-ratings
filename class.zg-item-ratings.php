@@ -3,6 +3,7 @@ class ZgItemRatings {
 	
 	protected $class_config 					= array();
 	protected $current_screen					= NULL;
+	private	  $plugin_ajax_nonce				= 'zg-item-ratings-ajax-nonce';
 	
 	function __construct( $config = array() ) {
 		
@@ -11,6 +12,9 @@ class ZgItemRatings {
 		
 		//Init plugin
 		add_action( 'current_screen', array($this, 'init_plugin') );
+		
+		//Add Ajax actions
+		add_action("wp_ajax_item-rate-update", array($this, 'ajax_item_rate_update'));
 		
 	}
 	
@@ -78,7 +82,8 @@ class ZgItemRatings {
 				
 				//Enqueue admin scripts
 				add_action( 'admin_enqueue_scripts', array($this, 'enqueue_admin_scripts') );
-				//$this->enqueue_admin_scripts();
+				
+				
 				
 			}
 			
@@ -216,6 +221,35 @@ class ZgItemRatings {
 			'1.0' 
 		);
 		
+		//Localize vars
+		$this->localize_script();
+		
+	}
+	
+	/**
+	* localize_script
+	* 
+	* Helper to localize all vars required for plugin JS.
+	* 
+	* @var		string	$object
+	* @var		array	$js_vars
+	* @access 	private
+	* @author	Ben Moody
+	*/
+	private function localize_script() {
+		
+		//Init vars
+		$object 	= 'ZgItemRatingsVars';
+		$js_vars	= array();
+		
+		//Localize vars for ajax requests
+		$js_vars['ajaxUrl']				= admin_url( 'admin-ajax.php' );
+		$js_vars['ajaxNonce'] 			= wp_create_nonce( $this->plugin_ajax_nonce );
+		
+		//Localize vars for rate update ajax action
+		$js_vars['rateUpdateAction'] = 'item-rate-update';
+		
+		wp_localize_script( 'zg-item-ratings', $object, $js_vars );
 	}
 	
 	/**
@@ -308,13 +342,17 @@ class ZgItemRatings {
 	public function add_custom_column_content( $config_option_key, $column_name, $post_ID ) {
 
 		//Init vars
+		$meta_key		= NULL;
 		$column_slug	= NULL;
+		$rating			= NULL;
 		$output 		= NULL;
 		
 		//Set column params
 		foreach( $this->class_config as $option ) {
 			if( $option['meta_key'] === $config_option_key ) {
-			
+				
+				$meta_key = $option['meta_key'];
+				
 				$column_slug = strtolower($option['meta_key']);
 
 				break;
@@ -323,9 +361,12 @@ class ZgItemRatings {
 
 		if ($column_name == $column_slug) {  
 	        
+	        //Cache current rating for item
+	        $rating = $this->get_rating_value( $post_ID, $meta_key );
+	        
 	        ob_start();
 	        ?>
-	        <div data-productid="<?php esc_attr_e($post_ID); ?>" class="zg-item-ratings-rateit"></div>
+	        <div data-itemid="<?php esc_attr_e($post_ID); ?>" data-ratinggroupid="<?php esc_attr_e($column_slug); ?>" data-rateit-value="<?php esc_attr_e($rating); ?>" class="zg-item-ratings-rateit"></div>
 	        <?php
 	        $output = ob_get_contents();
 	        ob_end_clean();
@@ -334,6 +375,123 @@ class ZgItemRatings {
 	        echo apply_filters( 'zg_item_ratings_column_stars', $output, $column_name, $post_ID );
 	    }
 		
+	}
+	
+	/**
+	* ajax_item_rate_update
+	* 
+	* Ajax action to update a post's (item's) rate meta value
+	*
+	* Note that the method loops the plugin config options array to make sure that
+	* the key used to identify the rating group is valid, then uses the meta key from the
+	* options array to store the rate value for the post.
+	*
+	* Note the json encode result array
+	* 
+	* @var		string	$nonce				//Nonce key stored in class global
+	* @var		string	$config_option_key	//The config option key for current rating group (basically 'meta_key' value in config)
+	* @var		mixed	$result
+	* @param	mixed	$result
+	* @access 	public
+	* @author	Ben Moody
+	*/
+	public function ajax_item_rate_update() {
+		
+		//Init vars
+		$nonce 				= $this->plugin_ajax_nonce;
+		$config_option_key	= NULL;	
+		$result				= FALSE;
+		
+		if ( !wp_verify_nonce( $_REQUEST['zgItemRateNonce'], $nonce)) {
+	    	exit();
+	    } 
+		
+		//Cache config option key for this rating group
+		if( isset($_POST['ratingGroup']) ) {
+			
+			$config_option_key = esc_attr( $_POST['ratingGroup'] );
+			
+			//Confirm this is a valid config option
+			foreach( $this->class_config as $option ) {
+				
+				//Lower case meta key for comparison
+				$option_meta_key_lower = strtolower($option['meta_key']);
+				
+				if( $option_meta_key_lower === $config_option_key ) {
+					
+					//Great, this is a valid meta key lets cache the post meta value key
+					$post_meta_key = $option['meta_key'];
+					
+					//Cache the post ID and the new rating value
+					$post_ID 	= esc_attr( $_POST['itemID'] );
+					$rate_value	= esc_attr( $_POST['rateValue'] );
+					
+					//Call method to save meta data
+					$result = $this->update_rating_value( $post_ID, $rate_value, $post_meta_key );
+					
+					//end loop
+					break;
+				}
+			}
+			
+		}
+		
+		//Test result and echo value for ajax call
+		if( $result !== FALSE ) {
+			
+			$result = array(
+				'result' 		=> 'OK',
+				'rateValue'		=> $rate_value
+			);
+			
+		} else {
+			
+			$result = array(
+				'result' 		=> 'ERROR',
+				'rateValue'		=> $rate_value
+			);
+			
+		}
+		
+		echo json_encode($result);
+		exit;
+	}
+	
+	/**
+	* update_rating_value
+	* 
+	* Helper to update rate meta value for a post
+	* 
+	* @access 	protected
+	* @author	Ben Moody
+	*/
+	protected function update_rating_value( $post_ID, $rate_value, $post_meta_key ) {
+		
+		//Init vars
+		$result = NULL;
+		
+		//Update post meta data
+		$result = update_post_meta( $post_ID, $post_meta_key, $rate_value );
+		
+		return $result;
+	}
+	
+	/**
+	* get_rating_value
+	* 
+	* Helper to GET rate meta value for a post
+	* 
+	* @access 	protected
+	* @author	Ben Moody
+	*/
+	protected function get_rating_value( $post_ID, $post_meta_key ) {
+		
+		//Init vars
+		$result = NULL;
+		
+		$result = get_post_meta( $post_ID, $post_meta_key, TRUE );
+		
+		return $result;
 	}
 	
 	/**
