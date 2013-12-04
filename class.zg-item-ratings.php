@@ -81,6 +81,12 @@ class ZgItemRatings {
 			return $this->add_custom_column_content( $method_explode[1], $args[0], $args[1] );
 		}
 		
+		//Detect calls to add_meta_box callback method
+		if( isset($method_explode[0]) && ($method_explode[0] === 'add_custom_meta_box') ) {
+			//Call add_custom_column method and pass args along
+			return $this->add_custom_meta_box( $method_explode[1] );
+		}
+		
 	}
 	
 	/**
@@ -203,6 +209,8 @@ class ZgItemRatings {
 		//Loop options and init custom columns for each active view
 		$this->init_custom_admin_columns();
 		
+		//Loop options and init custom meta boxes
+		$this->init_custom_meta_boxes();
 		
 	}
 	
@@ -382,6 +390,7 @@ class ZgItemRatings {
 		$column_slug	= NULL;
 		$rating			= NULL;
 		$css_class   	= NULL;
+		$option 		= NULL;
 		$output 		= NULL;
 		
 		//Set column params
@@ -417,8 +426,109 @@ class ZgItemRatings {
 	        ob_end_clean();
 	        
 	        //Echo out content
-	        echo apply_filters( 'zg_item_ratings_column_stars', $output, $column_name, $post_ID );
+	        echo apply_filters( 'zg_item_ratings_column_stars', $output, $column_name, $option, $post_ID );
 	    }
+		
+	}
+	
+	/**
+	* init_custom_meta_boxes
+	* 
+	* Loops all plugin config options and Sets params and calls add_meta_box
+	* for each instance of the plugin
+	* 
+	* @var		array	$options
+	* @access 	private
+	* @author	Ben Moody
+	*/
+	private function init_custom_meta_boxes() {
+		
+		//Init vars
+		$options 		= $this->class_config;
+		
+		//Loop plugin config options and init meta boxes for each
+		foreach( $options as $option ) {
+			
+			//Setup actions and filters for requested post type views
+			foreach( $option['active_post_types'] as $view ) {
+				
+				//Set parameters
+				$id 		= strtolower( $option['meta_key'] );
+				$title		= $option['name'];
+				$post_type 	= $view;
+				$context 	= 'side';
+				$priority 	= 'high';
+				
+				add_meta_box(
+					$id,
+					$title,
+					array($this, 'add_custom_meta_box-' .$option['meta_key'] ),
+					$post_type,
+					$context,
+					$priority
+				);
+				
+			}
+			
+		}
+		
+	}
+	
+	/**
+	* add_custom_meta_box
+	* 
+	* Callback function for add_meta_box() called in $this->init_custom_meta_boxes
+	*
+	* Gets star rating value and sets html output
+	* 
+	* @param	string	$config_option_key
+	* @access 	public
+	* @author	Ben Moody
+	*/
+	public function add_custom_meta_box( $config_option_key ) {
+		
+		//Init vars
+		global $post;
+		$post_ID 		= NULL;
+		$meta_key		= NULL;
+		$rating			= NULL;
+		$option 		= NULL;
+		$output 		= NULL;
+		
+		$post_ID = $post->ID;
+		
+		//Set column params
+		foreach( $this->class_config as $option ) {
+			
+			//Set option defaults
+			$option = $this->set_config_option_defaults( $option );
+			
+			if( $option['meta_key'] === $config_option_key ) {
+				
+				$meta_key 			= $option['meta_key'];
+				
+				$column_slug 		= strtolower($option['meta_key']);
+				
+				$css_class 			= $option['css_class'];
+				
+				$disable_on_update 	= $option['disable_on_update'];
+				
+				//Cache current rating for item
+		        $rating = $this->get_rating_value( $post_ID, $meta_key );
+		        
+		        ob_start();
+		        ?>
+		        <div data-itemid="<?php esc_attr_e($post_ID); ?>" data-ratinggroupid="<?php esc_attr_e($column_slug); ?>" data-rateit-value="<?php esc_attr_e($rating); ?>" data-disablerating="<?php esc_attr_e($disable_on_update); ?>" class="zg-item-ratings-rateit <?php esc_attr_e($column_slug); ?> <?php esc_attr($css_class); ?>"></div>
+		        <?php
+		        $output = ob_get_contents();
+		        ob_end_clean();
+		        
+		        //Echo out content
+		        echo apply_filters( 'zg_item_ratings_metabox_stars', $output, $option, $post_ID );
+				
+				break;
+			}
+		}
 		
 	}
 	
