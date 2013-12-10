@@ -418,12 +418,15 @@ class ZgItemRatings {
 	        //Cache current rating for item
 	        $rating = $this->get_rating_value( $post_ID, $meta_key );
 	        
-	        ob_start();
-	        ?>
-	        <div data-itemid="<?php esc_attr_e($post_ID); ?>" data-ratinggroupid="<?php esc_attr_e($column_slug); ?>" data-rateit-value="<?php esc_attr_e($rating); ?>" data-disablerating="<?php esc_attr_e($disable_on_update); ?>" class="zg-item-ratings-rateit <?php esc_attr_e($column_slug); ?> <?php esc_attr($css_class); ?>"></div>
-	        <?php
-	        $output = ob_get_contents();
-	        ob_end_clean();
+	        $output = $this->get_rating_star_html(
+	        	array(
+					'post_ID'			=> $post_ID,
+					'column_slug'		=> $column_slug,
+					'rating'			=> $rating,
+					'disable_on_update'	=> $disable_on_update,
+					'css_class'			=> $css_class
+				)
+	        );
 	        
 	        //Echo out content
 	        echo apply_filters( 'zg_item_ratings_column_stars', $output, $column_name, $option, $post_ID );
@@ -516,12 +519,15 @@ class ZgItemRatings {
 				//Cache current rating for item
 		        $rating = $this->get_rating_value( $post_ID, $meta_key );
 		        
-		        ob_start();
-		        ?>
-		        <div data-itemid="<?php esc_attr_e($post_ID); ?>" data-ratinggroupid="<?php esc_attr_e($column_slug); ?>" data-rateit-value="<?php esc_attr_e($rating); ?>" data-disablerating="<?php esc_attr_e($disable_on_update); ?>" class="zg-item-ratings-rateit <?php esc_attr_e($column_slug); ?> <?php esc_attr($css_class); ?>"></div>
-		        <?php
-		        $output = ob_get_contents();
-		        ob_end_clean();
+		        $output = $this->get_rating_star_html(
+		        	array(
+						'post_ID'			=> $post_ID,
+						'column_slug'		=> $column_slug,
+						'rating'			=> $rating,
+						'disable_on_update'	=> $disable_on_update,
+						'css_class'			=> $css_class
+					)
+		        );
 		        
 		        //Echo out content
 		        echo apply_filters( 'zg_item_ratings_metabox_stars', $output, $option, $post_ID );
@@ -530,6 +536,40 @@ class ZgItemRatings {
 			}
 		}
 		
+	}
+	
+	/**
+	* get_rating_star_html
+	* 
+	* Helper to create html required for star rating element
+	* 
+	* @access 	protected
+	* @author	Ben Moody
+	*/
+	protected function get_rating_star_html( $args = array() ) {
+		
+		//Init vars
+		$output = NULL;
+		$defaults = array(
+			'post_ID'			=> NULL,
+			'column_slug'		=> NULL,
+			'rating'			=> NULL,
+			'disable_on_update'	=> NULL,
+			'css_class'			=> NULL
+		);
+		
+		$args = wp_parse_args( $args, $defaults );
+		
+		extract( $args );
+		
+		ob_start();
+        ?>
+        <div data-itemid="<?php esc_attr_e($post_ID); ?>" data-ratinggroupid="<?php esc_attr_e($column_slug); ?>" data-rateit-value="<?php esc_attr_e($rating); ?>" data-disablerating="<?php esc_attr_e($disable_on_update); ?>" class="zg-item-ratings-rateit <?php esc_attr_e($post_ID); ?> <?php esc_attr_e($column_slug); ?> <?php esc_attr($css_class); ?>"></div>
+        <?php
+        $output = ob_get_contents();
+        ob_end_clean();
+		
+		return $output;
 	}
 	
 	/**
