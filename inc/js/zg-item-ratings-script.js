@@ -57,7 +57,8 @@ jQuery(document).ready(function( $ ){
 			},
 			type: 'POST',
 			success: function (data) {
-			
+				//Make sure that all rating elements for this post are updated - may be more than one :)
+				$('.zg-item-ratings-rateit.'+itemID+'.'+ratingGroupID).rateit( 'value', value );
 			},
 			error: function (jxhr, msg, err) {
 				alert( ajaxUpdateErrorText );
