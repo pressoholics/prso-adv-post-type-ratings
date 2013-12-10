@@ -1,7 +1,7 @@
 <?php
 class ZgItemRatings {
 	
-	protected $class_config 					= array();
+	protected static $class_config 				= array();
 	protected $current_screen					= NULL;
 	private	  $plugin_ajax_nonce				= 'zg-item-ratings-ajax-nonce';
 	
@@ -34,7 +34,7 @@ class ZgItemRatings {
 	function __construct( $config = array() ) {
 		
 		//Cache plugin congif options
-		$this->class_config = $config;
+		self::$class_config = $config;
 		
 		//Init plugin
 		add_action( 'current_screen', array($this, 'init_plugin') );
@@ -102,7 +102,7 @@ class ZgItemRatings {
 	public function init_plugin() {
 		
 		//Init vars
-		$options 		= $this->class_config;
+		$options 		= self::$class_config;
 		
 		if( !empty($options) && is_admin() ) {
 		
@@ -129,7 +129,7 @@ class ZgItemRatings {
 	* Detects if current admin view has been set as 'active_post_type' in
 	* plugin config options array.
 	* 
-	* @var		array	$this->class_config
+	* @var		array	self::$class_config
 	* @var		array	$active_views
 	* @var		obj		$screen
 	* @var		string	$current_screen
@@ -140,7 +140,7 @@ class ZgItemRatings {
 	protected function is_active_view() {
 		
 		//Init vars
-		$options 		= $this->class_config;
+		$options 		= self::$class_config;
 		$active_views	= array();
 		$screen			= get_current_screen();
 		$current_screen	= NULL;
@@ -284,7 +284,7 @@ class ZgItemRatings {
 		$js_vars['rateUpdateAction'] = 'item-rate-update';
 		
 		//Localize plugin config options
-		$js_vars['pluginConfigOptions'] = $this->set_config_option_defaults( $this->class_config, TRUE );
+		$js_vars['pluginConfigOptions'] = $this->set_config_option_defaults( self::$class_config, TRUE );
 		
 		//Translation text for ajax rating update error
 		$js_vars['ajaxRateUpdateErrorText'] = _x( 
@@ -310,7 +310,7 @@ class ZgItemRatings {
 	private function init_custom_admin_columns() {
 		
 		//Init vars
-		$options 		= $this->class_config;
+		$options 		= self::$class_config;
 		
 		//Loop plugin config options and init custom columns for each
 		foreach( $options as $option ) {
@@ -357,7 +357,7 @@ class ZgItemRatings {
 		$column_name	= NULL;
 		
 		//Set column params
-		foreach( $this->class_config as $option ) {
+		foreach( self::$class_config as $option ) {
 			if( $option['meta_key'] === $config_option_key ) {
 			
 				$column_slug = strtolower($option['meta_key']);
@@ -394,7 +394,7 @@ class ZgItemRatings {
 		$output 		= NULL;
 		
 		//Set column params
-		foreach( $this->class_config as $option ) {
+		foreach( self::$class_config as $option ) {
 			
 			//Set option defaults
 			$option = $this->set_config_option_defaults( $option );
@@ -444,7 +444,7 @@ class ZgItemRatings {
 	private function init_custom_meta_boxes() {
 		
 		//Init vars
-		$options 		= $this->class_config;
+		$options 		= self::$class_config;
 		
 		//Loop plugin config options and init meta boxes for each
 		foreach( $options as $option ) {
@@ -498,7 +498,7 @@ class ZgItemRatings {
 		$post_ID = $post->ID;
 		
 		//Set column params
-		foreach( $this->class_config as $option ) {
+		foreach( self::$class_config as $option ) {
 			
 			//Set option defaults
 			$option = $this->set_config_option_defaults( $option );
@@ -567,7 +567,7 @@ class ZgItemRatings {
 			$config_option_key = esc_attr( $_POST['ratingGroup'] );
 			
 			//Confirm this is a valid config option
-			foreach( $this->class_config as $option ) {
+			foreach( self::$class_config as $option ) {
 				
 				//Lower case meta key for comparison
 				$option_meta_key_lower = strtolower($option['meta_key']);
