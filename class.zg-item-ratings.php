@@ -87,6 +87,18 @@ class ZgItemRatings {
 			return $this->add_custom_meta_box( $method_explode[1] );
 		}
 		
+		//Detect calls to custom sortable columns method
+		if( isset($method_explode[0]) && ($method_explode[0] === 'manage_sortable_columns') ) {
+			//Call manage_sortable_columns method and pass args along
+			return $this->manage_sortable_columns( $method_explode[1], $args[0] );
+		}
+		
+		//Detect calls to custom sortable columns pre get posts method
+		if( isset($method_explode[0]) && ($method_explode[0] === 'custom_column_sort_query') ) {
+			//Call custom_column_sort_query method and pass args along
+			return $this->custom_column_sort_query( $method_explode[1], $args[0] );
+		}
+		
 	}
 	
 	/**
@@ -322,16 +334,28 @@ class ZgItemRatings {
 						//Note we append option mete key value to create a unique method name for overloading - see $this->__call
 						add_filter('manage_media_columns', array($this, 'add_custom_column-' .$option['meta_key'] ), 10);  
 						add_action('manage_media_custom_column', array($this, 'add_custom_column_content-' .$option['meta_key']), 10, 2);
+						//Make sure column is sortable
+						add_filter('manage_upload_sortable_columns', array($this, 'manage_sortable_columns-' .$option['meta_key']) );
+						//Add query filter to pre get posts to set sort query vars
+						add_action('pre_get_posts', array($this, 'custom_column_sort_query-' .$option['meta_key']) );
 						break;
 					case 'post';
 						//Note we append option mete key value to create a unique method name for overloading - see $this->__call
 						add_filter('manage_post_posts_columns', array($this, 'add_custom_column-' .$option['meta_key'] ), 10);  
 						add_action('manage_post_posts_custom_column', array($this, 'add_custom_column_content-' .$option['meta_key']), 10, 2);
+						//Make sure column is sortable
+						add_filter('manage_edit-post_sortable_columns', array($this, 'manage_sortable_columns-' .$option['meta_key']) );
+						//Add query filter to pre get posts to set sort query vars
+						add_action('pre_get_posts', array($this, 'custom_column_sort_query-' .$option['meta_key']) );
 						break;
 					default:
 						//Note we append option mete key value to create a unique method name for overloading - see $this->__call
 						add_filter('manage_'. $view .'_posts_columns', array($this, 'add_custom_column-' .$option['meta_key'] ), 10);  
 						add_action('manage_'. $view .'_posts_custom_column', array($this, 'add_custom_column_content-' .$option['meta_key']), 10, 2);
+						//Make sure column is sortable
+						add_filter('manage_edit-'. $view .'_sortable_columns', array($this, 'manage_sortable_columns-' .$option['meta_key']) );
+						//Add query filter to pre get posts to set sort query vars
+						add_action('pre_get_posts', array($this, 'custom_column_sort_query-' .$option['meta_key']) );
 						break;
 				}
 			}
@@ -370,6 +394,53 @@ class ZgItemRatings {
 		}
 		  
 	    return $defaults; 
+		
+	}
+	
+	/**
+	* manage_sortable_columns
+	* 
+	* Called By Filters: 'manage_[post_type]_sortable_columns'
+	* 
+	* @access 	public
+	* @author	Ben Moody
+	*/
+	public function manage_sortable_columns( $column_key, $columns ) {
+		
+		//Init vars
+		$column_name	= NULL;
+		
+		//Addend custom column into sort array
+		$column_name = strtolower( $column_key );
+		$columns[ $column_name ] = $column_name;
+		
+		return $columns;
+	}
+	
+	/**
+	* custom_column_sort_query
+	* 
+	* Called By Action: 'pre_get_posts'
+	* 
+	* @access 	public
+	* @author	Ben Moody
+	*/
+	public function custom_column_sort_query( $column_key, $query ) {
+		
+		//Init vars
+		$column_name	= NULL;
+		
+		if( ! is_admin() )  
+			return;  
+		
+		$column_name = strtolower( $column_key );
+		
+		$orderby = $query->get( 'orderby');  
+		
+		if( $column_name == $orderby ) {  
+			$query->set('meta_key',$column_name);  
+			$query->set('orderby','meta_value_num');  
+		} 
 		
 	}
 	
