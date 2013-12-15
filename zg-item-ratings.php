@@ -35,6 +35,15 @@ $config_options = array(
 			'post',
 			'attachment'
 		)
+	),
+	array(
+		'meta_key'			=>	'META_KEY_POST_RATING_2',
+		'name'				=>	'Item Ratings',
+		'disable_on_update'	=>	FALSE,
+		'active_post_types'	=>	array(
+			'post',
+			'attachment'
+		)
 	)
 );
 
