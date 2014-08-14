@@ -4,6 +4,9 @@ class ZgItemRatings {
 	protected static $class_config 				= array();
 	protected $current_screen					= NULL;
 	private	  $plugin_ajax_nonce				= 'zg-item-ratings-ajax-nonce';
+	protected $plugin_path						= ZGITEMRATINGS__PLUGIN_DIR;
+	protected $plugin_url						= ZGITEMRATINGS__PLUGIN_URL;
+	protected $plugin_textdomain				= ZGITEMRATINGS__DOMAIN;
 	
 	//Helper to set default config options for plugin
 	protected function set_config_option_defaults( $args, $is_all_options = FALSE ) {
@@ -36,11 +39,25 @@ class ZgItemRatings {
 		//Cache plugin congif options
 		self::$class_config = $config;
 		
+		//Set textdomain
+		add_action( 'after_setup_theme', array($this, 'plugin_textdomain') );
+		
 		//Init plugin
+		add_action( 'init', array($this, 'init_options') );
 		add_action( 'current_screen', array($this, 'init_plugin') );
 		
 		//Add Ajax actions
 		add_action("wp_ajax_item-rate-update", array($this, 'ajax_item_rate_update'));
+		
+	}
+	
+	/**
+	 * Setup plugin textdomain folder
+	 * @public
+	 */
+	public function plugin_textdomain() {
+		
+		load_plugin_textdomain( $this->plugin_textdomain, FALSE, $this->plugin_path . '/languages/' );
 		
 	}
 	
@@ -120,7 +137,10 @@ class ZgItemRatings {
 		
 			//Confirm we are on an active admin view
 			if( $this->is_active_view() ) {
-		
+				
+				//PLUGIN OPTIONS FRAMEWORK -- comment out if you dont need options
+				$this->load_redux_options_framework();
+				
 				//Set plugin admin actions
 				$this->set_admin_actions();
 				
@@ -131,6 +151,50 @@ class ZgItemRatings {
 				
 			}
 			
+		}
+		
+	}
+	
+	public function init_options() {
+		
+		//Init vars
+		$options 		= self::$class_config;
+		
+		if( is_admin() ) {
+		
+			//PLUGIN OPTIONS FRAMEWORK -- comment out if you dont need options
+			$this->load_redux_options_framework();
+			
+		}
+		
+	}
+	
+	/**
+	* load_redux_options_framework
+	* 
+	* Loads Redux options framework as well as the unique config file for this plugin
+	*
+	* NOTE!!!!
+	*			You WILL need to make sure some unique constants as well as the class
+	*			name in the plugin config file 'inc/ReduxConfig/ReduxConfig.php'
+	*
+	* @access 	public
+	* @author	Ben Moody
+	*/
+	protected function load_redux_options_framework() {
+		
+		//Init vars
+		$framework_inc 		= $this->plugin_path . 'inc/ReduxFramework/ReduxCore/framework.php';
+		$framework_config	= $this->plugin_path . 'inc/ReduxConfig/ReduxConfig.php';
+		
+		//Try and load redux framework
+		if ( !class_exists('ReduxFramework') && file_exists($framework_inc) ) {
+			require_once( $framework_inc );
+		}
+		
+		//Try and load redux config for this plugin
+		if ( file_exists($framework_config) ) {
+			require_once( $framework_config );
 		}
 		
 	}
@@ -301,7 +365,7 @@ class ZgItemRatings {
 		//Translation text for ajax rating update error
 		$js_vars['ajaxRateUpdateErrorText'] = _x( 
 			'There was a problem updating the rating. Please try again.', 
-			'Alert message for users when ajax rating update fails', 
+			'Alert message for users', 
 			ZGITEMRATINGS__DOMAIN 
 		);
 		
@@ -683,8 +747,9 @@ class ZgItemRatings {
 				//Lower case meta key for comparison
 				$option_meta_key_lower = strtolower($option['meta_key']);
 				
+
 				if( $option_meta_key_lower === $config_option_key ) {
-					
+
 					//Great, this is a valid meta key lets cache the post meta value key
 					$post_meta_key = $option['meta_key'];
 					
