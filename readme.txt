@@ -3,7 +3,7 @@ Contributors: ben.moody,tomauger
 Tags: post type rating,custom post type rating,rating,rate post type,rate post types,rate custom post types
 Requires at least: 3.0
 Tested up to: 4.0
-Stable tag: 1.0
+Stable tag: 1.01
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 
