@@ -2,7 +2,7 @@
 Contributors: ben.moody,tomauger
 Tags: post type rating,custom post type rating,rating,rate post type,rate post types,rate custom post types
 Requires at least: 3.0
-Tested up to: 3.9.2
+Tested up to: 4.0
 Stable tag: 1.0
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
@@ -56,5 +56,14 @@ Be sure that you have selected at least one post type for your rater in the rate
 P.S. If you have many raters be sure you are looking at the correct options section for the rater in question.
 
 == Changelog ==
+
+= 1.01 =
+* Wordpress 4.0 support
+
 = 1.0 =
 * Initial version of the plugin.
+
+== Upgrade Notice ==
+
+= 1.01 =
+* Wordpress 4.0 support

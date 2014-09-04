@@ -4,7 +4,7 @@
  * Plugin URI: http://www.BenjaminMoody.com & http://www.zeitguys.com
  * Description: Provides star ratings option for all post types, includes thumbnail zoom for media list view.
  * Author: Benjamin Moody
- * Version: 1.0
+ * Version: 1.01
  * Author URI: http://www.BenjaminMoody.com
  * License: GPL2+
  * Text Domain: zg_item_ratings
@@ -13,7 +13,7 @@
 
 //Define plugin constants
 define( 'ZGITEMRATINGS__MINIMUM_WP_VERSION', '3.0' );
-define( 'ZGITEMRATINGS__VERSION', '1.0' );
+define( 'ZGITEMRATINGS__VERSION', '1.01' );
 define( 'ZGITEMRATINGS__DOMAIN', 'zg-item-ratings-plugin' );
 
 //Plugin admin options will be available in global var with this name, also is database slug for options
